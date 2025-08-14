@@ -1,27 +1,44 @@
 import os
+
 from dotenv import load_dotenv
+
 load_dotenv()
 
+# end::import-retriever[]
+from lmstudio_client import get_embedding_model, get_lmstudio_embedding
 from neo4j import GraphDatabase
+
 # tag::import-embedder[]
-from neo4j_graphrag.embeddings.openai import OpenAIEmbeddings
+from neo4j_graphrag.embeddings import Embedder
+
 # end::import-embedder[]
 # tag::import-retriever[]
 from neo4j_graphrag.retrievers import VectorRetriever
-# end::import-retriever[]
 
 # Connect to Neo4j database
-driver = GraphDatabase.driver(
-    os.getenv("NEO4J_URI"), 
-    auth=(
-        os.getenv("NEO4J_USERNAME"), 
-        os.getenv("NEO4J_PASSWORD")
-    )
-)
+driver = GraphDatabase.driver(os.getenv("NEO4J_URI"), auth=(os.getenv("NEO4J_USERNAME"), os.getenv("NEO4J_PASSWORD")))
+
+
+# Create custom embedder for LM Studio
+class LMStudioEmbedder(Embedder):
+    def __init__(self, model_name=None):
+        self.model = get_lmstudio_embedding(model_name)
+
+    def embed_query(self, text: str):
+        result = self.model.embed(text)
+        return result.data
+
+    def embed_documents(self, texts):
+        embeddings = []
+        for text in texts:
+            result = self.model.embed(text)
+            embeddings.append(result.data)
+        return embeddings
+
 
 # tag::embedder[]
-# Create embedder
-embedder = OpenAIEmbeddings(model="text-embedding-ada-002")
+# Create embedder with LM Studio
+embedder = LMStudioEmbedder(get_embedding_model())
 # end::embedder[]
 
 # tag::retriever[]

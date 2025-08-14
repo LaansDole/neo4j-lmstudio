@@ -1,12 +1,44 @@
-= Neo4j & Generative AI Fundamentals
+= Neo4j & LM Studio Fundamentals
 
-This repository accompanies the link:https://graphacademy.neo4j.com/courses/genai-fundamentals/[Neo4 & Generative AI Fundamentals course^] on link:https://graphacademy.neo4j.com[GraphAcademy^].
+This repository is based on the link:https://graphacademy.neo4j.com/courses/genai-fundamentals/[Neo4j & Generative AI Fundamentals course^] on link:https://graphacademy.neo4j.com[GraphAcademy^], but modified to use LM Studio instead of OpenAI.
 
-For a complete walkthrough of this repository, link:https://graphacademy.neo4j.com/courses/genai-fundamentals/[enrol now^].
+*LM Studio Migration*: This project demonstrates how to use link:https://lmstudio.ai[LM Studio^] with its native Python SDK for local AI inference, providing excellent macOS compatibility and user-friendly model management.
 
-link:https://codespaces.new/neo4j-graphacademy/genai-fundamentals[image:https://github.com/codespaces/badge.svg[Open in GitHub Codespaces]^]
+Original course: link:https://graphacademy.neo4j.com/courses/genai-fundamentals/[enrol now^]
 
-== Tests
+== LM Studio Setup
+
+Before running the examples, you need to set up LM Studio:
+
+. *Download and install LM Studio*:
+   - Visit link:https://lmstudio.ai[LM Studio website^]
+   - Download the desktop application for your platform (Windows, macOS, Linux)
+   - Install and launch the application
+
+. *Download required models*:
+   Using LM Studio GUI or CLI:
++
+[source,sh]
+----
+# Install LM Studio CLI
+brew install lmstudio  # macOS
+# or download from https://lmstudio.ai/docs/cli
+
+# Download recommended models
+lms get llama-3.2-1b-instruct
+lms get text-embedding-nomic-embed-text-v1.5
+----
+
+. *Load models in LM Studio*:
+   - Open LM Studio desktop app
+   - Load the chat model: `llama-3.2-1b-instruct`
+   - Load the embedding model: `text-embedding-nomic-embed-text-v1.5`
+
+. *Verify LM Studio is ready*:
+   - Ensure the desktop app is running
+   - Models should be loaded and ready for inference
+
+== Setup and Tests
 
 To run the solution tests: 
 
@@ -21,7 +53,20 @@ pip install -r requirements.txt
 [source,sh]
 pip install pytest
 . Create a `.env` file in the root directory. Use `.env.example` as a template.
+. *Test the environment* (including LM Studio connection):
++
+[source,sh]
+python genai-fundamentals/test_environment.py
 . Run the tests
 +
 [source,sh]
 pytest genai-fundamentals/solutions
+
+== Key Differences from Original
+
+* *LM Studio Integration*: Uses LM Studio's native Python SDK for local inference
+* *No API Keys Required*: Direct integration with LM Studio desktop application
+* *Excellent macOS Support*: Native Apple Silicon optimization and compatibility
+* *User-Friendly Setup*: GUI-based model management and configuration
+* *Privacy-First*: All data processing happens locally with LM Studio
+* *Offline Capable*: Works without internet connectivity once models are downloaded
