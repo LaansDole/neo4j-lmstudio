@@ -2,7 +2,7 @@
 
 This repository is based on the link:https://graphacademy.neo4j.com/courses/genai-fundamentals/[Neo4j & Generative AI Fundamentals course^] on link:https://graphacademy.neo4j.com[GraphAcademy^], but modified to use LM Studio instead of OpenAI.
 
-*LM Studio Migration*: This project demonstrates how to use link:https://lmstudio.ai[LM Studio^] with its native Python SDK for local AI inference, providing excellent macOS compatibility and user-friendly model management.
+*LM Studio Migration*: This project demonstrates how to use link:https://lmstudio.ai[LM Studio^] with its OpenAI-compatible server for local AI inference, providing excellent macOS compatibility and user-friendly model management.
 
 Original course: link:https://graphacademy.neo4j.com/courses/genai-fundamentals/[enrol now^]
 
@@ -16,57 +16,68 @@ Before running the examples, you need to set up LM Studio:
    - Install and launch the application
 
 . *Download required models*:
-   Using LM Studio GUI or CLI:
-+
-[source,sh]
-----
-# Install LM Studio CLI
-brew install lmstudio  # macOS
-# or download from https://lmstudio.ai/docs/cli
+   Using the LM Studio GUI, search for and download the following models:
+   - `meta-llama-3.1-8b-instruct` (or another chat model)
+   - `nomic-ai/nomic-embed-text-v1.5` (for embeddings)
+   - `openai/gpt-oss-20b` (for the `make chat` example)
 
-# Download recommended models
-lms get llama-3.2-1b-instruct
-lms get text-embedding-nomic-embed-text-v1.5
-----
-
-. *Load models in LM Studio*:
-   - Open LM Studio desktop app
-   - Load the chat model: `llama-3.2-1b-instruct`
-   - Load the embedding model: `text-embedding-nomic-embed-text-v1.5`
+. *Start the Local Server*:
+   - In LM Studio, go to the "Local Server" tab (server icon on the left).
+   - Select your downloaded chat model at the top.
+   - Click "Start Server".
 
 . *Verify LM Studio is ready*:
-   - Ensure the desktop app is running
-   - Models should be loaded and ready for inference
+   - The server should be running and listening on `localhost:1234`.
+   - You can use `make lmstudio-status` to check the connection.
 
-== Setup and Tests
+== Project Setup and Testing
 
-To run the solution tests: 
+To set up the project and run the tests:
 
-. Create Neo4j instance with the `recommendations` dataset
-. Run the link:https://github.com/neo4j-graphacademy/courses/blob/main/asciidoc/courses/genai-fundamentals/modules/2-rag/lessons/3-vector-index/reset.cypher[Cypher to add embeddings and create the vector index^].
-. Create a virtual environment and install the requirements.
-+ 
-[source,sh]
-pip install -r requirements.txt
-. Install `pytest`
+. *Prerequisites*:
+  - A running Neo4j instance (e.g., Neo4j Desktop or AuraDB) with the `recommendations` dataset.
+  - Run the link:https://github.com/neo4j-graphacademy/courses/blob/main/asciidoc/courses/genai-fundamentals/modules/2-rag/lessons/3-vector-index/reset.cypher[Cypher script^] to add embeddings and create the vector index.
+
+. *Initial Setup*:
+  - Create a virtual environment and install dependencies using the Makefile.
 +
 [source,sh]
-pip install pytest
-. Create a `.env` file in the root directory. Use `.env.example` as a template.
-. *Test the environment* (including LM Studio connection):
+----
+make setup
+source venv/bin/activate
+make dev-install
+----
+
+. *Environment Configuration*:
+  - Create a `.env` file in the root directory. You can copy the `.env.example` file as a template.
 +
 [source,sh]
-python genai-fundamentals/test_environment.py
-. Run the tests
+----
+cp .env.example .env
+----
+  - Update the `.env` file with your Neo4j credentials and ensure the LM Studio model names match what you have loaded.
+
+. *Run the Chat Example*:
+  - For a quick test to see if your LM Studio setup is working, run the interactive chat example. This uses a model to query Wikipedia.
 +
 [source,sh]
-pytest genai-fundamentals/solutions
+----
+make chat
+----
+
+. *Run the Solution Tests*:
+  - To run the full suite of tests for the RAG examples:
++
+[source,sh]
+----
+make test-solutions
+----
 
 == Key Differences from Original
 
-* *LM Studio Integration*: Uses LM Studio's native Python SDK for local inference
-* *No API Keys Required*: Direct integration with LM Studio desktop application
-* *Excellent macOS Support*: Native Apple Silicon optimization and compatibility
-* *User-Friendly Setup*: GUI-based model management and configuration
-* *Privacy-First*: All data processing happens locally with LM Studio
-* *Offline Capable*: Works without internet connectivity once models are downloaded
+* *LM Studio Integration*: Uses LM Studio's OpenAI-compatible server for local inference.
+* *No API Keys Required*: Direct integration with the local LM Studio server.
+* *Excellent macOS Support*: Native Apple Silicon optimization and compatibility.
+* *User-Friendly Setup*: GUI-based model management and server configuration.
+* *Privacy-First*: All data processing happens locally with LM Studio.
+* *Offline Capable*: Works without internet connectivity once models are downloaded (except for the `make chat` example which queries Wikipedia).

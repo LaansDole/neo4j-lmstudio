@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # end::import-graphrag[]
-from lmstudio_client import get_chat_model, get_embedding_model, get_lmstudio_embedding, get_lmstudio_llm
+from lmstudio_client import client, get_chat_model, get_embedding_model, get_lmstudio_embedding, get_lmstudio_llm
 from neo4j import GraphDatabase
 from neo4j_graphrag.embeddings import Embedder
 
@@ -44,8 +44,13 @@ class LMStudioLLM(LLMInterface):
         self.model = get_lmstudio_llm(model_name)
 
     def invoke(self, input: str) -> str:
-        response = self.model.respond(input)
-        return response
+        messages = [{"role": "user", "content": input}]
+        response = client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content
 
 
 # Create embedder with LM Studio

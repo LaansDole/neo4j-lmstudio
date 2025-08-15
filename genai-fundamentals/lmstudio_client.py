@@ -1,20 +1,19 @@
-"""
-LM Studio Client Configuration
-
-This module provides utilities for configuring and connecting to LM Studio
-for local LLM and embedding model interactions.
-"""
-
 import os
 from typing import List, Optional
 
-import lmstudio as lms
 from dotenv import load_dotenv
 from neo4j_graphrag.embeddings.base import Embedder
 from neo4j_graphrag.llm.base import LLMInterface
+from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
+
+# Configure the default LM Studio client
+client = OpenAI(
+    base_url=os.getenv("LMSTUDIO_API_HOST", "http://127.0.0.1:1234/v1"),
+    api_key="lm-studio",
+)
 
 
 def get_lmstudio_llm(model_name: Optional[str] = None):
@@ -28,9 +27,9 @@ def get_lmstudio_llm(model_name: Optional[str] = None):
         LM Studio LLM model instance
     """
     if model_name is None:
-        model_name = os.getenv("LMSTUDIO_CHAT_MODEL", "llama-3.2-1b-instruct")
+        model_name = os.getenv("LMSTUDIO_CHAT_MODEL", "meta-llama-3.1-8b-instruct")
 
-    return lms.llm(model_name)
+    return model_name
 
 
 def get_lmstudio_embedding(model_name: Optional[str] = None):
@@ -44,28 +43,32 @@ def get_lmstudio_embedding(model_name: Optional[str] = None):
         LM Studio embedding model instance
     """
     if model_name is None:
-        model_name = os.getenv("LMSTUDIO_EMBEDDING_MODEL", "text-embedding-nomic-embed-text-v1.5")
+        model_name = os.getenv("LMSTUDIO_EMBEDDING_MODEL", "nomic-ai/nomic-embed-text-v1.5")
 
-    return lms.embedding_model(model_name)
+    return model_name
 
 
 class LMStudioLLM(LLMInterface):
     """
-    LM Studio LLM implementation for Neo4j GraphRAG.
+    LM Studio LLM wrapper for Neo4j GraphRAG compatibility.
+
+    This class implements the LLMInterface to enable Neo4j GraphRAG
+    to work with LM Studio's local language models using OpenAI's library.
     """
 
-    def __init__(self, model_instance):
+    def __init__(self, model_name: Optional[str] = None):
         """
-        Initialize with LM Studio model instance.
+        Initialize LM Studio LLM.
 
         Args:
-            model_instance: LM Studio LLM model instance
+            model_name: Name of the LM Studio model to use.
+                       If None, uses environment variable LMSTUDIO_CHAT_MODEL
         """
-        self.model = model_instance
+        self.model = get_lmstudio_llm(model_name)
 
     def invoke(self, input: str) -> str:
         """
-        Generate text completion using LM Studio LLM.
+        Generate text completion using LM Studio LLM with proper Chat API.
 
         Args:
             input: Input text prompt
@@ -74,8 +77,13 @@ class LMStudioLLM(LLMInterface):
             Generated text completion
         """
         try:
-            result = self.model.complete(input)
-            return result.content
+            messages = [{"role": "user", "content": input}]
+            response = client.chat.completions.create(
+                model=self.model,
+                messages=messages,
+                temperature=0.7,
+            )
+            return response.choices[0].message.content
         except Exception as e:
             raise RuntimeError(f"LM Studio LLM completion failed: {e}")
 
@@ -89,7 +97,7 @@ class LMStudioLLM(LLMInterface):
         Returns:
             Generated text completion
         """
-        # For now, just call the sync version since LM Studio SDK doesn't require async
+        # For now, just call the sync version
         return self.invoke(input)
 
 
@@ -98,14 +106,14 @@ class LMStudioEmbedder(Embedder):
     LM Studio Embedder implementation for Neo4j GraphRAG.
     """
 
-    def __init__(self, model_instance):
+    def __init__(self, model_name: Optional[str] = None):
         """
-        Initialize with LM Studio embedding model instance.
+        Initialize with LM Studio embedding model name.
 
         Args:
-            model_instance: LM Studio embedding model instance
+            model_name: Optional model name. If not provided, uses default from environment
         """
-        self.model = model_instance
+        self.model = get_lmstudio_embedding(model_name)
 
     def embed_query(self, text: str) -> List[float]:
         """
@@ -118,27 +126,48 @@ class LMStudioEmbedder(Embedder):
             List of embedding values
         """
         try:
-            embedding = self.model.embed(text)
-            return embedding
+            response = client.embeddings.create(model=self.model, input=[text])
+            return response.data[0].embedding
         except Exception as e:
             raise RuntimeError(f"LM Studio embedding failed: {e}")
 
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        """
+        Generate embeddings for multiple documents.
 
-def get_chat_model():
+        Args:
+            texts: List of texts to embed
+
+        Returns:
+            List of embedding vectors
+        """
+        embeddings = []
+        for text in texts:
+            embeddings.append(self.embed_query(text))
+        return embeddings
+
+
+def get_chat_model(model_name: Optional[str] = None):
     """
     Convenience function to get the default chat model.
+
+    Args:
+        model_name: Optional model name
 
     Returns:
         LM Studio LLM model instance for chat
     """
-    return get_lmstudio_llm()
+    return get_lmstudio_llm(model_name)
 
 
-def get_embedding_model():
+def get_embedding_model(model_name: Optional[str] = None):
     """
     Convenience function to get the default embedding model.
+
+    Args:
+        model_name: Optional model name
 
     Returns:
         LM Studio embedding model instance
     """
-    return get_lmstudio_embedding()
+    return get_lmstudio_embedding(model_name)

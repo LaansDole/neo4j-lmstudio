@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from lmstudio_client import get_chat_model, get_lmstudio_llm
+from lmstudio_client import get_chat_model, get_lmstudio_llm, client
 from neo4j import GraphDatabase
 from neo4j_graphrag.generation import GraphRAG
 from neo4j_graphrag.llm import LLMInterface
@@ -20,8 +20,13 @@ class LMStudioLLM(LLMInterface):
         self.model = get_lmstudio_llm(model_name)
 
     def invoke(self, input: str) -> str:
-        response = self.model.respond(input)
-        return response
+        messages = [{"role": "user", "content": input}]
+        response = client.chat.completions.create(
+            model=self.model,
+            messages=messages,
+            temperature=0.7,
+        )
+        return response.choices[0].message.content
 
 
 # Create LLM

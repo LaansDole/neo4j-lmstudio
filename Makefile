@@ -3,7 +3,7 @@
 # This Makefile provides common development tasks for testing, linting,
 # and running the Neo4j + LM Studio integration project.
 
-.PHONY: help install test test-env test-solutions lint format check-style clean setup dev-setup run-examples lmstudio-status all
+.PHONY: help ngrok install test test-env test-solutions lint format check-style clean setup dev-setup run-examples lmstudio-status all
 
 # Default target
 help: ## Show this help message
@@ -25,6 +25,9 @@ TEST_OPTIONS := -v
 
 # === Environment Setup ===
 
+ngrok:
+	ngrok http --url=sset-localai.ngrok.io 1234 --pooling-enabled=true
+
 install: ## Install project dependencies
 	$(PIP) install -r requirements.txt
 
@@ -42,6 +45,9 @@ setup: ## Set up the development environment
 	@echo "Then run: make dev-install"
 
 # === Testing ===
+
+chat: ## Run chat tests
+	$(PYTHON) tool-use-example.py
 
 test: ## Run all tests
 	$(PYTHON) -m pytest $(TEST_OPTIONS)
