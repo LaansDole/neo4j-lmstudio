@@ -135,7 +135,13 @@ class LMStudioClient:
             Generated response
         """
         model = self.get_llm(model_name)
-        return model.respond(prompt)
+        result = model.respond(prompt)
+        
+        # Handle PredictionResult object
+        if hasattr(result, 'content'):
+            return result.content
+        else:
+            return str(result)
     
     def respond_with_history(self, messages: list, model_name: Optional[str] = None) -> str:
         """
@@ -149,7 +155,13 @@ class LMStudioClient:
             Generated response
         """
         model = self.get_llm(model_name)
-        return model.respond({"messages": messages})
+        result = model.respond({"messages": messages})
+        
+        # Handle PredictionResult object
+        if hasattr(result, 'content'):
+            return result.content
+        else:
+            return str(result)
     
     def get_embedding_model(self, model_name: Optional[str] = None):
         """

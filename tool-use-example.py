@@ -4,7 +4,6 @@ Demonstrates how an LM Studio model can query Wikipedia
 """
 
 # Standard library imports
-import os
 import itertools
 import json
 import shutil
@@ -16,17 +15,13 @@ import urllib.request
 
 # Third-party imports
 from openai import OpenAI
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
-# Configure the default LM Studio client
+# Initialize LM Studio client
 client = OpenAI(
-    base_url=os.getenv("LMSTUDIO_API_HOST", "http://127.0.0.1:1234/v1"),
-    api_key="lm-studio",
+    base_url="http://127.0.0.1:1234/v1", 
+    api_key="lm-studio"
 )
-MODEL = "openai/gpt-oss-20b"
+MODEL = "llama-3.2-1b-instruct"
 
 
 def fetch_wikipedia_content(search_query: str) -> dict:

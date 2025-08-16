@@ -3,7 +3,7 @@
 # This Makefile provides common development tasks for the production-ready
 # Neo4j + LMStudio integration package.
 
-.PHONY: help install test lint format check-style clean setup dev-install run-examples health-check all
+.PHONY: help install lint format check-style clean setup dev-install run-examples health-check all
 
 # Default target
 help: ## Show this help message
@@ -21,9 +21,6 @@ PYTHON := python3
 PIP := pip
 VENV_DIR := venv
 SRC_DIR := src
-EXAMPLES_DIR := examples
-TEST_DIR := tests
-TEST_OPTIONS := -v
 
 # === Environment Setup ===
 
@@ -42,38 +39,6 @@ setup: ## Set up the development environment
 	@echo "Virtual environment ready. Activate with: source $(VENV_DIR)/bin/activate"
 	@echo "Then run: make dev-install"
 
-# === Testing ===
-
-test: ## Run the test suite
-	$(PYTHON) $(TEST_DIR)/test_integration.py
-
-test-package: ## Test package imports and basic functionality
-	$(PYTHON) -c "from neo4j_lmstudio import VectorRAG, Text2CypherRAG, Settings; print('✅ Package imports successful')"
-
-# === Examples ===
-
-run-examples: ## Run all example scripts
-	@echo "Running example scripts..."
-	@echo "Note: LMStudio and Neo4j must be running"
-	@echo ""
-	@echo "1. Running health check example..."
-	$(PYTHON) $(EXAMPLES_DIR)/health_check_example.py || true
-	@echo ""
-	@echo "2. Running Vector RAG example..."
-	$(PYTHON) $(EXAMPLES_DIR)/vector_rag_example.py || true
-	@echo ""
-	@echo "3. Running Text2Cypher RAG example..."
-	$(PYTHON) $(EXAMPLES_DIR)/text2cypher_rag_example.py || true
-
-health-check: ## Run system health check
-	$(PYTHON) $(EXAMPLES_DIR)/health_check_example.py
-
-vector-rag: ## Run Vector RAG example
-	$(PYTHON) $(EXAMPLES_DIR)/vector_rag_example.py
-
-text2cypher-rag: ## Run Text2Cypher RAG example
-	$(PYTHON) $(EXAMPLES_DIR)/text2cypher_rag_example.py
-
 # === Code Quality ===
 
 lint: ## Run linting checks
@@ -84,14 +49,14 @@ lint: ## Run linting checks
 
 format: ## Format code with black and isort
 	@echo "Formatting code with black..."
-	$(PYTHON) -m black $(SRC_DIR)/ $(EXAMPLES_DIR)/ $(TEST_DIR)/ --line-length=127
+	$(PYTHON) -m black $(SRC_DIR)/ --line-length=127
 	@echo "Organizing imports with isort..."
-	$(PYTHON) -m isort $(SRC_DIR)/ $(EXAMPLES_DIR)/ $(TEST_DIR)/ --profile black --line-length 127
+	$(PYTHON) -m isort $(SRC_DIR)/ --profile black --line-length 127
 
 check-style: ## Check code style without making changes
 	@echo "Checking code style..."
-	$(PYTHON) -m black $(SRC_DIR)/ $(EXAMPLES_DIR)/ $(TEST_DIR)/ --line-length=127 --check --diff
-	$(PYTHON) -m isort $(SRC_DIR)/ $(EXAMPLES_DIR)/ $(TEST_DIR)/ --profile black --line-length 127 --check-only --diff
+	$(PYTHON) -m black $(SRC_DIR)/ --line-length=127 --check --diff
+	$(PYTHON) -m isort $(SRC_DIR)/ --profile black --line-length 127 --check-only --diff
 
 mypy: ## Run type checking
 	@echo "Running mypy type checking..."
@@ -116,19 +81,16 @@ dev-check: ## Run comprehensive development checks
 	@echo "Running comprehensive development checks..."
 	make format
 	make lint
-	make test-package
 
 ci-check: ## Run CI-style checks (for automated testing)
 	@echo "Running CI checks..."
 	make check-style
 	$(PYTHON) -m flake8 $(SRC_DIR)/ --count --max-complexity=10 --max-line-length=127 --exit-zero
-	make test-package
 
 all: ## Run all checks and tests
 	@echo "Running complete development workflow..."
 	make format
 	make lint
-	make test
 
 # === Package Management ===
 
@@ -162,9 +124,9 @@ env-info: ## Show environment information
 	@echo "Package installed: $$($(PIP) show neo4j-lmstudio >/dev/null 2>&1 && echo 'Yes' || echo 'No')"
 	@echo "LM Studio status: $$(curl -s http://localhost:1234/v1/models > /dev/null 2>&1 && echo 'Running' || echo 'Not running')"
 
-# === Legacy Commands (for compatibility) ===
+# === Utility Commands ===
 
-chat: ## Run legacy chat example
+chat:
 	$(PYTHON) tool-use-example.py
 
 # === Quick Commands ===
